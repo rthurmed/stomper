@@ -58,6 +58,7 @@ const bouncePad = game.add([
     k.sprite("bean"),
     k.anchor("center"),
     k.pos(k.center().x + 100, k.height() - 100),
+    k.area(),
     k.color(k.Color.RED),
     k.z(-1),
 ])
@@ -130,4 +131,13 @@ bean.onStateUpdate("move", () => {
         k.dt() * camera.accel
     );
     k.camPos(camera.pos);
+});
+
+bean.onCollide("bounceable", (obj, col) => {
+    if (col.isBottom()) {
+        bean.movement.y = 0;
+        bean.stomping = false;
+        bean.jump(GAME_GRAVITY * 2);
+        obj.destroy();
+    }
 });
