@@ -1,6 +1,7 @@
 import kaplay from "kaplay";
 
 const GAME_GRAVITY = 350;
+const STOMP_MOVEMENT = 10;
 
 const k = kaplay({
     canvas: document.getElementById("canvas") as HTMLCanvasElement,
@@ -21,12 +22,22 @@ const game = k.add([
     k.timer()
 ]);
 
+const player = game.add([
+    "controller",
+    {
+        direction: k.vec2(),
+        stomp: false,
+        jump: false,
+        flipX: false,
+    }
+]);
+
 const camera = game.add([
     "controller",
     k.pos(),
     {
-        offset: k.vec2(100, 0),
-        accel: 4,
+        offset: k.vec2(150, 0),
+        accel: 3,
     }
 ]);
 
@@ -38,12 +49,22 @@ const floor = game.add([
         isStatic: true
     }),
     k.pos(0, k.height() - 100),
-    k.rect(k.width(), 100),
+    k.rect(k.width(), 80),
     k.area()
 ]);
 
+const bouncePad = game.add([
+    "bounceable",
+    k.sprite("bean"),
+    k.anchor("center"),
+    k.pos(k.center().x + 100, k.height() - 100),
+    k.color(k.Color.RED),
+    k.z(-1),
+])
+
 const bean = game.add([
     "char",
+    k.state("move", ["move", "stomp", "bounce"]),
     k.sprite("bean"),
     k.anchor("bot"),
     k.pos(k.center()),
@@ -56,37 +77,34 @@ const bean = game.add([
     }
 ]);
 
-const player = game.add([
-    "controller",
-    {
-        direction: k.vec2()
-    }
-]);
-
-game.onUpdate(() => {
-    const STOMP_MOVEMENT = 10;
-
-    let shouldJump = false;
-    let shouldStomp = false;
+bean.onStateUpdate("move", () => {
+    player.jump = false;
+    player.stomp = false;
     player.direction = k.vec2();
 
     // capture
     if (k.isKeyDown("left")) {
         player.direction.x -= 1;
+        player.flipX = true;
     }
     if (k.isKeyDown("right")) {
         player.direction.x += 1;
+        player.flipX = false;
     }
     if (k.isKeyDown("up")) {
         player.direction.y = -1;
     }
 
-    shouldStomp = !bean.isGrounded() && k.isKeyDown("down");
-    shouldJump = bean.isGrounded() && k.isKeyDown("up");
+    player.jump = bean.isGrounded() && k.isKeyDown("up");
+    player.stomp = !bean.isGrounded() && k.isKeyDown("down");
+
+    if (player.stomp) {
+        // bean.enterState("stomp");
+        // TODO
+    }
 
     // apply
-    bean.stomping = bean.stomping || shouldStomp;
-
+    bean.stomping = bean.stomping || player.stomp;
     if (bean.stomping) {
         player.direction.y = STOMP_MOVEMENT;
     }
@@ -94,7 +112,7 @@ game.onUpdate(() => {
     bean.movement = k.lerp(bean.movement, player.direction.scale(bean.speed), k.dt() * 10);
     bean.move(bean.movement);
 
-    if (shouldJump) {
+    if (player.jump) {
         bean.jump(GAME_GRAVITY);
     }
 
@@ -102,10 +120,13 @@ game.onUpdate(() => {
         bean.stomping = false;
     }
 
+    bean.flipX = player.flipX;
+
     // cam
+    const flippedOffset = camera.offset.scale(player.flipX ? k.Vec2.LEFT : k.Vec2.RIGHT);
     camera.pos = k.lerp(
         camera.pos,
-        k.vec2(bean.pos.x, k.height() / 2).add(camera.offset),
+        k.vec2(bean.pos.x, k.height() / 2).add(flippedOffset),
         k.dt() * camera.accel
     );
     k.camPos(camera.pos);
