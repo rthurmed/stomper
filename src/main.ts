@@ -21,6 +21,15 @@ const game = k.add([
     k.timer()
 ]);
 
+const camera = game.add([
+    "controller",
+    k.pos(),
+    {
+        offset: k.vec2(100, 0),
+        accel: 4,
+    }
+]);
+
 const floor = game.add([
     "floor",
     "structure",
@@ -92,4 +101,12 @@ game.onUpdate(() => {
     if (bean.isGrounded()) {
         bean.stomping = false;
     }
+
+    // cam
+    camera.pos = k.lerp(
+        camera.pos,
+        k.vec2(bean.pos.x, k.height() / 2).add(camera.offset),
+        k.dt() * camera.accel
+    );
+    k.camPos(camera.pos);
 });
