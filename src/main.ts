@@ -42,7 +42,8 @@ const bean = game.add([
     k.area(),
     {
         movement: k.vec2(),
-        speed: k.vec2(300, 100)
+        speed: k.vec2(300, 100),
+        stomping: false
     }
 ]);
 
@@ -54,30 +55,41 @@ const player = game.add([
 ]);
 
 game.onUpdate(() => {
+    const STOMP_MOVEMENT = 10;
+
+    let shouldJump = false;
+    let shouldStomp = false;
     player.direction = k.vec2();
 
+    // capture
     if (k.isKeyDown("left")) {
         player.direction.x -= 1;
     }
     if (k.isKeyDown("right")) {
         player.direction.x += 1;
     }
-    
-    if (!bean.isGrounded()) {
-        if (k.isKeyDown("up")) {
-            player.direction.y = -1;
-        }
-        if (k.isKeyDown("down")) {
-            // TODO: stomp
-        }
+    if (k.isKeyDown("up")) {
+        player.direction.y = -1;
     }
 
-    const shouldJump = bean.isGrounded() && k.isKeyDown("up");
+    shouldStomp = !bean.isGrounded() && k.isKeyDown("down");
+    shouldJump = bean.isGrounded() && k.isKeyDown("up");
+
+    // apply
+    bean.stomping = bean.stomping || shouldStomp;
+
+    if (bean.stomping) {
+        player.direction.y = STOMP_MOVEMENT;
+    }
 
     bean.movement = k.lerp(bean.movement, player.direction.scale(bean.speed), k.dt() * 10);
     bean.move(bean.movement);
 
     if (shouldJump) {
         bean.jump(GAME_GRAVITY);
+    }
+
+    if (bean.isGrounded()) {
+        bean.stomping = false;
     }
 });
