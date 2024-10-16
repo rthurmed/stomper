@@ -1,5 +1,6 @@
-import kaplay, { GameObj, Vec2 } from "kaplay";
+import kaplay, { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, Vec2 } from "kaplay";
 
+const GAME_TILE = 64;
 const GAME_GRAVITY = 500;
 const STOMP_MOVEMENT = 10;
 
@@ -41,21 +42,69 @@ const camera = game.add([
     }
 ]);
 
-function addBouncePad(root: GameObj, pos: Vec2) {
-    return root.add([
-        "bounceable",
-        k.sprite("bean"),
-        k.anchor("center"),
-        k.pos(pos),
-        k.area(),
-        k.color(k.Color.RED),
-        k.z(-1),
-    ]);
-}
+const currentLevel = [
+    "                        ",
+    "                        ",
+    "                        ",
+    "                        ",
+    "                        ",
+    "             o ====     ",
+    "     ===                ",
+    "          o             ",
+    "                o       ",
+    "     b      o           ",
+    "          o             ",
+];
 
-addBouncePad(game, k.vec2(k.center().x + 100, k.height() - 100))
-addBouncePad(game, k.vec2(k.center().x + 250, k.height() - 300))
-addBouncePad(game, k.vec2(k.center().x + 500, k.height() - 500))
+const level = k.addLevel(currentLevel, {
+    tileWidth: GAME_TILE,
+    tileHeight: GAME_TILE,
+    tiles: {
+        "o": () => [
+            "bounceable",
+            k.sprite("bean"),
+            k.anchor("center"),
+            k.area(),
+            k.color(k.Color.RED),
+            k.z(-1),
+        ],
+        "=": () => [
+            "floor",
+            "structure",
+            "bounceable",
+            "bounceable-stomp",
+            "bounceable-keep",
+            k.color(k.Color.WHITE),
+            k.rect(GAME_TILE, GAME_TILE),
+            k.body({
+                isStatic: true
+            }),
+            k.area(),
+            {
+                bounceableStrength: .25
+            }
+        ],
+        "b": () => [
+            "char",
+            k.state("move", ["move", "stomp", "bounce"]),
+            k.sprite("bean"),
+            k.anchor("bot"),
+            k.body(),
+            k.area(),
+            {
+                movement: k.vec2(),
+                speed: k.vec2(300, 100),
+                stomping: false
+            }
+        ]
+    }
+});
+
+const bean = level.get("char").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | {
+    movement: Vec2;
+    speed: Vec2;
+    stomping: boolean;
+}>;
 
 const floor = game.add([
     "floor",
@@ -67,26 +116,11 @@ const floor = game.add([
     k.body({
         isStatic: true
     }),
-    k.pos(0, k.height() - 100),
-    k.rect(k.width(), 80),
+    k.pos(GAME_TILE, GAME_TILE * currentLevel.length), // bottom of the level
+    k.rect(GAME_TILE * currentLevel[0].length, GAME_TILE * 2), // filling all the level length
     k.area(),
     {
         bounceableStrength: .25
-    }
-]);
-
-const bean = game.add([
-    "char",
-    k.state("move", ["move", "stomp", "bounce"]),
-    k.sprite("bean"),
-    k.anchor("bot"),
-    k.pos(k.center()),
-    k.body(),
-    k.area(),
-    {
-        movement: k.vec2(),
-        speed: k.vec2(300, 100),
-        stomping: false
     }
 ]);
 
