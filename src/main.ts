@@ -60,13 +60,19 @@ addBouncePad(game, k.vec2(k.center().x + 500, k.height() - 500))
 const floor = game.add([
     "floor",
     "structure",
+    "bounceable",
+    "bounceable-stomp",
+    "bounceable-keep",
     k.color(k.Color.WHITE),
     k.body({
         isStatic: true
     }),
     k.pos(0, k.height() - 100),
     k.rect(k.width(), 80),
-    k.area()
+    k.area(),
+    {
+        bounceableStrength: .25
+    }
 ]);
 
 const bean = game.add([
@@ -103,7 +109,7 @@ bean.onStateUpdate("move", () => {
     }
 
     player.jump = bean.isGrounded() && k.isKeyDown("up");
-    player.stomp = !bean.isGrounded() && k.isKeyDown("down");
+    player.stomp = !bean.isGrounded() && (k.isKeyDown("down") || k.isKeyReleased("space"));
 
     if (player.stomp) {
         // bean.enterState("stomp");
@@ -140,10 +146,20 @@ bean.onStateUpdate("move", () => {
 });
 
 bean.onCollide("bounceable", (obj, col) => {
+    const keep = obj.is("bounceable-keep");
+    const stompOnly = obj.is("bounceable-stomp");
+    const strength = !("bounceableStrength" in obj) ? 1 : obj.bounceableStrength;
+
+    if (stompOnly && bean.stomping === false) {
+        return;
+    }
+
     if (col.isBottom()) {
         bean.movement.y = 0;
         bean.stomping = false;
-        bean.jump(GAME_GRAVITY);
-        obj.destroy();
+        bean.jump(GAME_GRAVITY * strength);
+        if (!keep) {
+            obj.destroy();
+        }
     }
 });
