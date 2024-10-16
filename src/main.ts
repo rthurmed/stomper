@@ -36,7 +36,7 @@ const camera = game.add([
     "controller",
     k.pos(),
     {
-        offset: k.vec2(150, 0),
+        offset: k.vec2(150, -100),
         accel: 3,
     }
 ]);
@@ -124,10 +124,10 @@ bean.onStateUpdate("move", () => {
     bean.flipX = player.flipX;
 
     // cam
-    const flippedOffset = camera.offset.scale(player.flipX ? k.Vec2.LEFT : k.Vec2.RIGHT);
+    const flippedOffset = camera.offset.scale(player.flipX ? -1 : 1, 1);
     camera.pos = k.lerp(
         camera.pos,
-        k.vec2(bean.pos.x, k.height() / 2).add(flippedOffset),
+        k.vec2(bean.pos).add(flippedOffset),
         k.dt() * camera.accel
     );
     k.camPos(camera.pos);
