@@ -1,12 +1,12 @@
-import kaplay from "kaplay";
+import kaplay, { GameObj, Vec2 } from "kaplay";
 
-const GAME_GRAVITY = 350;
+const GAME_GRAVITY = 500;
 const STOMP_MOVEMENT = 10;
 
 const k = kaplay({
     canvas: document.getElementById("canvas") as HTMLCanvasElement,
-    width: 800,
-    height: 600,
+    // width: 800,
+    // height: 600,
     // letterbox: true,
     debug: true
 });
@@ -41,6 +41,22 @@ const camera = game.add([
     }
 ]);
 
+function addBouncePad(root: GameObj, pos: Vec2) {
+    return root.add([
+        "bounceable",
+        k.sprite("bean"),
+        k.anchor("center"),
+        k.pos(pos),
+        k.area(),
+        k.color(k.Color.RED),
+        k.z(-1),
+    ]);
+}
+
+addBouncePad(game, k.vec2(k.center().x + 100, k.height() - 100))
+addBouncePad(game, k.vec2(k.center().x + 250, k.height() - 300))
+addBouncePad(game, k.vec2(k.center().x + 500, k.height() - 500))
+
 const floor = game.add([
     "floor",
     "structure",
@@ -52,16 +68,6 @@ const floor = game.add([
     k.rect(k.width(), 80),
     k.area()
 ]);
-
-const bouncePad = game.add([
-    "bounceable",
-    k.sprite("bean"),
-    k.anchor("center"),
-    k.pos(k.center().x + 100, k.height() - 100),
-    k.area(),
-    k.color(k.Color.RED),
-    k.z(-1),
-])
 
 const bean = game.add([
     "char",
@@ -114,7 +120,7 @@ bean.onStateUpdate("move", () => {
     bean.move(bean.movement);
 
     if (player.jump) {
-        bean.jump(GAME_GRAVITY);
+        bean.jump(GAME_GRAVITY * .5);
     }
 
     if (bean.isGrounded()) {
@@ -137,7 +143,7 @@ bean.onCollide("bounceable", (obj, col) => {
     if (col.isBottom()) {
         bean.movement.y = 0;
         bean.stomping = false;
-        bean.jump(GAME_GRAVITY * 2);
+        bean.jump(GAME_GRAVITY);
         obj.destroy();
     }
 });
