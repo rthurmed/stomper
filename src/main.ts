@@ -1,8 +1,9 @@
 import kaplay, { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2 } from "kaplay";
 
 const GAME_TILE = 64;
-const GAME_GRAVITY = 500;
-const STOMP_MOVEMENT = 10;
+const GAME_GRAVITY = 900;
+const CHAR_STOMP_MOVEMENT = 10;
+const CHAR_JUMP_STRENGTH = GAME_GRAVITY * .35;
 
 const k = kaplay({
     canvas: document.getElementById("canvas") as HTMLCanvasElement,
@@ -71,6 +72,9 @@ const level = k.addLevel(currentLevel, {
             k.anchor("center"),
             k.area(),
             k.z(-1),
+            {
+                bounceableStrength: .75
+            }
         ],
         "=": () => [
             "floor",
@@ -96,7 +100,7 @@ const level = k.addLevel(currentLevel, {
             k.area(),
             {
                 movement: k.vec2(),
-                speed: k.vec2(300, 100),
+                speed: k.vec2(450, 150),
                 stomping: false
             }
         ],
@@ -179,14 +183,14 @@ bean.onStateUpdate("move", () => {
     // apply
     bean.stomping = bean.stomping || player.stomp;
     if (bean.stomping) {
-        player.direction.y = STOMP_MOVEMENT;
+        player.direction.y = CHAR_STOMP_MOVEMENT;
     }
 
     bean.movement = k.lerp(bean.movement, player.direction.scale(bean.speed), k.dt() * 10);
     bean.move(bean.movement);
 
     if (player.jump) {
-        bean.jump(GAME_GRAVITY * .5);
+        bean.jump(CHAR_JUMP_STRENGTH);
     }
 
     if (bean.isGrounded()) {
