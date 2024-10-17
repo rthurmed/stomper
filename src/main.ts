@@ -1,4 +1,4 @@
-import kaplay, { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, Vec2 } from "kaplay";
+import kaplay, { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2 } from "kaplay";
 
 const GAME_TILE = 64;
 const GAME_GRAVITY = 500;
@@ -100,7 +100,7 @@ const level = k.addLevel(currentLevel, {
     }
 });
 
-const bean = level.get("char").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | {
+const bean = level.get("char").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | PosComp | {
     movement: Vec2;
     speed: Vec2;
     stomping: boolean;
