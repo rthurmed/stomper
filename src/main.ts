@@ -42,6 +42,7 @@ const player = game.add([
 const camera = game.add([
     "controller",
     k.pos(),
+    k.state("player", ["player", "cinematic"]),
     {
         offset: k.vec2(150, -100),
         accel: 3,
@@ -203,8 +204,9 @@ bean.onStateUpdate("move", () => {
     if (bean.pos.y > 1000) {
         bean.pos = beanInitialPos;
     }
+});
 
-    // cam
+camera.onStateUpdate("player", () => {
     const flippedOffset = camera.offset.scale(player.flipX ? -1 : 1, 1);
     camera.pos = k.lerp(
         camera.pos,
