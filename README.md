@@ -1,5 +1,5 @@
-# Match 3 Fruit
+# Stomper
 
 ## Credits
 
-Food sprites by Kenney: https://kenney.nl/assets/food-kit
+Sprites from: https://kaplayjs.com/crew/

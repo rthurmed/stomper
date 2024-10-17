@@ -12,12 +12,17 @@ const k = kaplay({
     debug: true
 });
 
-k.debug.inspect = true;
+// k.debug.inspect = true;
 
 k.setBackground(k.Color.fromHex("#fff275"));
 k.setGravity(GAME_GRAVITY);
 
 k.loadSprite("bean", "sprites/bean.png");
+k.loadSprite("door", "sprites/door.png");
+k.loadSprite("steel", "sprites/steel.png");
+k.loadSprite("spike", "sprites/spike.png");
+k.loadSprite("key-o", "sprites/key-o.png");
+k.loadSprite("btfly-o", "sprites/btfly-o.png");
 
 const game = k.add([
     k.timer()
@@ -43,17 +48,17 @@ const camera = game.add([
 ]);
 
 const currentLevel = [
-    "                        ",
-    "                        ",
-    "                        ",
-    "                        ",
-    "                        ",
-    "             o ====     ",
-    "     ===                ",
-    "          o             ",
-    "                o       ",
-    "     b      o           ",
-    "          o             ",
+    "                         ",
+    "                         ",
+    "                         ",
+    "       k                 ",
+    "                  D      ",
+    "             o   ===     ",
+    "     ===                 ",
+    "          o          o   ",
+    "                o        ",
+    "     c      o  =   =   o ",
+    "          o   ==AAA==    ",
 ];
 
 const level = k.addLevel(currentLevel, {
@@ -62,10 +67,9 @@ const level = k.addLevel(currentLevel, {
     tiles: {
         "o": () => [
             "bounceable",
-            k.sprite("bean"),
+            k.sprite("btfly-o"),
             k.anchor("center"),
             k.area(),
-            k.color(k.Color.RED),
             k.z(-1),
         ],
         "=": () => [
@@ -74,8 +78,7 @@ const level = k.addLevel(currentLevel, {
             "bounceable",
             "bounceable-stomp",
             "bounceable-keep",
-            k.color(k.Color.WHITE),
-            k.rect(GAME_TILE, GAME_TILE),
+            k.sprite("steel"),
             k.body({
                 isStatic: true
             }),
@@ -84,7 +87,7 @@ const level = k.addLevel(currentLevel, {
                 bounceableStrength: .25
             }
         ],
-        "b": () => [
+        "c": () => [
             "char",
             k.state("move", ["move", "stomp", "bounce"]),
             k.sprite("bean"),
@@ -96,6 +99,27 @@ const level = k.addLevel(currentLevel, {
                 speed: k.vec2(300, 100),
                 stomping: false
             }
+        ],
+        // TODO
+        "D": () => [
+            "door",
+            k.sprite("door"),
+            k.area(),
+        ],
+        // TODO
+        "k": () => [
+            "key",
+            "grabable",
+            k.sprite("key-o"),
+            k.area()
+        ],
+        // TODO
+        "A": () => [
+            "spike",
+            "danger",
+            k.sprite("spike"),
+            k.area(),
+            k.pos(0, GAME_TILE - 21)
         ]
     }
 });
@@ -105,6 +129,7 @@ const bean = level.get("char").at(0) as GameObj<AnchorComp | AreaComp | BodyComp
     speed: Vec2;
     stomping: boolean;
 }>;
+const beanInitialPos = bean.pos.clone();
 
 const floor = game.add([
     "floor",
@@ -113,6 +138,7 @@ const floor = game.add([
     "bounceable-stomp",
     "bounceable-keep",
     k.color(k.Color.WHITE),
+    k.outline(4, k.Color.BLACK),
     k.body({
         isStatic: true
     }),
@@ -168,6 +194,11 @@ bean.onStateUpdate("move", () => {
     }
 
     bean.flipX = player.flipX;
+
+    // workaround for weird kaboom physics glitch
+    if (bean.pos.y > 1000) {
+        bean.pos = beanInitialPos;
+    }
 
     // cam
     const flippedOffset = camera.offset.scale(player.flipX ? -1 : 1, 1);
