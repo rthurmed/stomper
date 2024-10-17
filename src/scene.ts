@@ -63,7 +63,8 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 {
                     movement: k.vec2(),
                     speed: k.vec2(450, 150),
-                    stomping: false
+                    stomping: false,
+                    lastStandingPoint: k.vec2(0, 0),
                 }
             ],
             // TODO
@@ -97,8 +98,10 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         movement: Vec2;
         speed: Vec2;
         stomping: boolean;
+        lastStandingPoint: Vec2;
     }>;
     const characterInitialPos = character.pos.clone();
+    character.lastStandingPoint = characterInitialPos.clone();
     
     const floor = game.add([
         "floor",
@@ -123,6 +126,11 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         player.jump = false;
         player.stomp = false;
         player.direction = k.vec2();
+
+        if (character.isGrounded()) {
+            character.stomping = false;
+            character.lastStandingPoint = character.pos.clone();
+        }
     
         // capture
         if (k.isKeyDown("left")) {
@@ -158,10 +166,6 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
             character.jump(CHAR_JUMP_STRENGTH);
         }
     
-        if (character.isGrounded()) {
-            character.stomping = false;
-        }
-    
         character.flipX = player.flipX;
     
         // workaround for weird kaboom physics glitch
@@ -171,10 +175,10 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
     });
     
     camera.onStateUpdate("player", () => {
-        const flippedOffset = camera.offset.scale(player.flipX ? -1 : 1, 1);
+        const offset = camera.offset // .scale(player.flipX ? -1 : 1, 1);
         camera.pos = k.lerp(
             camera.pos,
-            k.vec2(character.pos).add(flippedOffset),
+            k.vec2(character.lastStandingPoint).add(offset),
             k.dt() * camera.accel
         );
         k.camPos(camera.pos);
@@ -192,6 +196,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         if (col.isBottom()) {
             character.movement.y = 0;
             character.stomping = false;
+            character.lastStandingPoint = character.pos.clone();
             character.jump(GAME_GRAVITY * strength);
             if (!keep) {
                 obj.destroy();
