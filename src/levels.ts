@@ -16,13 +16,13 @@ export const levels: Record<string, StomperLevel> = {
     },
     test2: {
         map: [
-            "                                          ",
-            "          ====   o                        ",
-            "                      o                   ",
-            "                                          ",
-            "                         o                ",
-            " c     =   =     =    =     =     =       ",
-            "      ==AAA==   ==AAAA==   ==AAAAA==   D  ",
+            "             ====                            ",
+            "                    o                        ",
+            "                         o                   ",
+            "                                             ",
+            "                            o                ",
+            "  c    =    =     =     =     =      =       ",
+            "      ==AAAA==   ==AAAAA==   ==AAAAAA==   D  ",
         ]
     }
 }
