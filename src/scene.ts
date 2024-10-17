@@ -3,8 +3,8 @@ import { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp
 export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
     const GAME_TILE = 64;
     const GAME_GRAVITY = k.getGravity();
-    const CHAR_STOMP_MOVEMENT = 10;
-    const CHAR_JUMP_STRENGTH = GAME_GRAVITY * .35;
+    const CHAR_STOMP_MOVEMENT = 20;
+    const CHAR_JUMP_STRENGTH = GAME_GRAVITY * .24;
 
     const game = k.add([
         k.timer()
@@ -25,8 +25,8 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         k.pos(),
         k.state("player", ["player", "cinematic"]),
         {
-            offset: k.vec2(150, -100),
-            accel: 3,
+            offset: k.vec2(150, -150),
+            accel: 2,
         }
     ]);
     
@@ -41,7 +41,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 k.area(),
                 k.z(-1),
                 {
-                    bounceableStrength: .75
+                    bounceableStrength: .3
                 }
             ],
             "=": () => [
@@ -62,7 +62,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 k.area(),
                 {
                     movement: k.vec2(),
-                    speed: k.vec2(450, 150),
+                    speed: k.vec2(575, 150),
                     stomping: false,
                     lastStandingPoint: k.vec2(0, 0),
                 }
@@ -72,13 +72,15 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 "door",
                 k.sprite("door"),
                 k.area(),
+                k.z(-1),
             ],
             // TODO
             "k": () => [
                 "key",
                 "grabable",
                 k.sprite("key-o"),
-                k.area()
+                k.area(),
+                k.z(2),
             ],
             // TODO
             "A": () => [
@@ -86,7 +88,8 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 "danger",
                 k.sprite("spike"),
                 k.area(),
-                k.pos(0, GAME_TILE - 21)
+                k.pos(0, GAME_TILE - 21),
+                k.z(2),
             ]
         }
     }
@@ -118,7 +121,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         k.rect(GAME_TILE * levelMap[0].length, GAME_TILE * 2), // filling all the level length
         k.area(),
         {
-            bounceableStrength: .5
+            bounceableStrength: .15
         }
     ]);
     
@@ -146,7 +149,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         }
     
         player.jump = character.isGrounded() && k.isKeyDown("up");
-        player.stomp = !character.isGrounded() && (k.isKeyDown("down") || k.isKeyReleased("space"));
+        player.stomp = !character.isGrounded() && (k.isKeyPressed("down") || k.isKeyReleased("space"));
     
         if (player.stomp) {
             // bean.enterState("stomp");
@@ -196,7 +199,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         if (col.isBottom()) {
             character.movement.y = 0;
             character.stomping = false;
-            character.lastStandingPoint = character.pos.clone();
+            // character.lastStandingPoint = character.pos.clone();
             character.jump(GAME_GRAVITY * strength);
             if (!keep) {
                 obj.destroy();

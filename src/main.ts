@@ -13,7 +13,7 @@ const k = kaplay({
 // k.debug.inspect = true;
 
 k.setBackground(k.Color.fromHex("#fff275"));
-k.setGravity(900);
+k.setGravity(4500);
 
 k.loadSprite("bean", "sprites/bean.png");
 k.loadSprite("door", "sprites/door.png");
@@ -25,6 +25,7 @@ k.loadSprite("btfly-o", "sprites/btfly-o.png");
 function setupDebugLevelSwitch() {
     k.onKeyPress("1", () => (k.go("test1")));
     k.onKeyPress("2", () => (k.go("test2")));
+    k.onKeyPress("r", () => (k.go(k.getSceneName())));
 }
 
 k.scene("test1", () => {
