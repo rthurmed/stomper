@@ -1,4 +1,4 @@
-import { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2, LevelOpt, KaboomCtx, Comp } from "kaplay";
+import { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2, LevelOpt, KaboomCtx, Comp, HealthComp, OpacityComp } from "kaplay";
 import { chase } from "./comps/chase";
 
 export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
@@ -53,6 +53,22 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                     isStatic: true
                 }),
                 k.area()
+            ],
+            "#": () => [
+                "block",
+                "structure",
+                "breakable",
+                k.sprite("steel"),
+                k.health(3, 3),
+                k.color(k.Color.RED),
+                k.opacity(1),
+                k.body({
+                    isStatic: true
+                }),
+                k.area(),
+                {
+                    bounceableStrength: .15
+                }
             ],
             "C": () => [
                 "character",
@@ -121,7 +137,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
     }>;
     const characterInitialPos = character.pos.clone();
     character.lastStandingPoint = characterInitialPos.clone();
-    
+
     const floor = game.add([
         "floor",
         "structure",
@@ -218,11 +234,31 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         if (col.isBottom()) {
             character.movement.y = 0;
             character.stomping = false;
-            // character.lastStandingPoint = character.pos.clone();
             character.jump(GAME_GRAVITY * strength);
             if (!keep) {
                 obj.destroy();
             }
+        }
+    });
+
+    character.onCollide("breakable", (obj, col) => {
+        const breakable = obj as GameObj<BodyComp | HealthComp | OpacityComp>;
+        const strength = !("bounceableStrength" in obj) ? 1 : obj.bounceableStrength;
+
+        if (col.isBottom() && character.stomping) {
+            breakable.hurt(1);
+            breakable.opacity = breakable.hp() / breakable.maxHP();
+            
+            if (breakable.hp() <= 0) {
+                breakable.destroy();
+            }
+
+            // FIXME: this needs to be called again because this logic
+            // conflicts with the bounceable reset logic.
+            // Must move stomping to a character state to fix it
+            character.movement.y = 0;
+            character.stomping = false;
+            character.jump(GAME_GRAVITY * strength);
         }
     });
 
