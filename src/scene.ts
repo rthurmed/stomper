@@ -54,7 +54,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 }),
                 k.area()
             ],
-            "c": () => [
+            "C": () => [
                 "character",
                 k.state("move", ["move", "stomp", "bounce"]),
                 k.sprite("bean"),
@@ -92,6 +92,19 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 k.sprite("spike"),
                 k.area(),
                 k.pos(0, GAME_TILE - 21),
+                k.z(2),
+            ],
+            "c": () => [
+                "baby",
+                "grabbable",
+                k.sprite("bean"),
+                k.scale(.75),
+                k.area(),
+                k.pos(
+                    k.rand(-GAME_TILE/2, GAME_TILE/2),
+                    k.rand(-GAME_TILE/2, GAME_TILE/2) + GAME_TILE / 2
+                ),
+                k.anchor("bot"),
                 k.z(2),
             ]
         }
@@ -184,7 +197,10 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
         const offset = camera.offset // .scale(player.flipX ? -1 : 1, 1);
         camera.pos = k.lerp(
             camera.pos,
-            k.vec2(character.lastStandingPoint).add(offset),
+            k.vec2(
+                character.pos.x,
+                character.lastStandingPoint.y,
+            ).add(offset),
             k.dt() * camera.accel
         );
         k.camPos(camera.pos);
@@ -213,8 +229,16 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
     k.onCollide("character", "grabbable", (a, b) => {
         const character = a as GameObj<BodyComp | PosComp>;
         const grabbable = b as GameObj<AreaComp | PosComp>;
+
+        // random position on top of the character to avoid overlapping
+        // NOTE: still does overlap
+        const offset = k.vec2(
+            k.rand() * GAME_TILE * 2 - GAME_TILE / 2,
+            GAME_TILE * -1 + k.rand() * (GAME_TILE / 4)
+        );
+
         grabbable.collisionIgnore = ["character"];
-        grabbable.use(chase(k, character, 4, k.vec2(0, GAME_TILE * -1)));
+        grabbable.use(chase(k, character, 4, offset));
     });
 
     return {

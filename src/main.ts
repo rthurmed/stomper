@@ -38,4 +38,4 @@ k.scene("test2", () => {
     setupDebugLevelSwitch();
 });
 
-k.go("test1");
+k.go("test2");
