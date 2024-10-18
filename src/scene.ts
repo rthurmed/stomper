@@ -1,4 +1,5 @@
-import { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2, LevelOpt, KaboomCtx } from "kaplay";
+import { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2, LevelOpt, KaboomCtx, Comp } from "kaplay";
+import { chase } from "./comps/chase";
 
 export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
     const GAME_TILE = 64;
@@ -54,7 +55,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 k.area()
             ],
             "c": () => [
-                "char",
+                "character",
                 k.state("move", ["move", "stomp", "bounce"]),
                 k.sprite("bean"),
                 k.anchor("bot"),
@@ -77,9 +78,11 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
             // TODO
             "k": () => [
                 "key",
-                "grabable",
+                "grabbable",
+                k.state("float", ["float", "grabbed"]),
                 k.sprite("key-o"),
                 k.area(),
+                k.anchor("bot"),
                 k.z(2),
             ],
             // TODO
@@ -97,7 +100,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
     const levelMap = level.map;
     const kaboomLevel = k.addLevel(levelMap, levelConfig);
     
-    const character = kaboomLevel.get("char").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | PosComp | {
+    const character = kaboomLevel.get("character").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | PosComp | {
         movement: Vec2;
         speed: Vec2;
         stomping: boolean;
@@ -205,6 +208,13 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                 obj.destroy();
             }
         }
+    });
+
+    k.onCollide("character", "grabbable", (a, b) => {
+        const character = a as GameObj<BodyComp | PosComp>;
+        const grabbable = b as GameObj<AreaComp | PosComp>;
+        grabbable.collisionIgnore = ["character"];
+        grabbable.use(chase(k, character, 4, k.vec2(0, GAME_TILE * -1)));
     });
 
     return {
