@@ -29,7 +29,9 @@ function setupDebugLevelSwitch() {
 }
 
 k.scene("test1", () => {
-    makePlayableLevel(k, levels.test1);
+    makePlayableLevel(k, levels.test1, {
+        nextScene: "test2"
+    });
     setupDebugLevelSwitch();
 });
 
@@ -38,4 +40,4 @@ k.scene("test2", () => {
     setupDebugLevelSwitch();
 });
 
-k.go("test2");
+k.go("test1");

@@ -1,11 +1,16 @@
 import { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2, LevelOpt, KaboomCtx, Comp, HealthComp, OpacityComp } from "kaplay";
 import { chase } from "./comps/chase";
 
-export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
+interface StomperLevelConfig {
+    nextScene: string;
+}
+
+export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: StomperLevelConfig = undefined) {
     const GAME_TILE = 64;
     const GAME_GRAVITY = k.getGravity();
     const CHAR_STOMP_MOVEMENT = 20;
     const CHAR_JUMP_STRENGTH = GAME_GRAVITY * .24;
+    const DOOR_OPEN_DELAY = 3;
 
     const game = k.add([
         k.timer()
@@ -84,14 +89,12 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
                     lastStandingPoint: k.vec2(0, 0),
                 }
             ],
-            // TODO
             "D": () => [
                 "door",
                 k.sprite("door"),
                 k.area(),
                 k.z(-1),
             ],
-            // TODO
             "k": () => [
                 "key",
                 "grabbable",
@@ -150,7 +153,7 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
             isStatic: true
         }),
         k.pos(GAME_TILE, GAME_TILE * levelMap.length), // bottom of the level
-        k.rect(GAME_TILE * levelMap[0].length, GAME_TILE * 2), // filling all the level length
+        k.rect(GAME_TILE * levelMap[0].length, GAME_TILE * 4), // filling all the level length
         k.area(),
         {
             bounceableStrength: .15
@@ -275,6 +278,19 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel) {
 
         grabbable.collisionIgnore = ["character"];
         grabbable.use(chase(k, character, 4, offset));
+    });
+
+    const door = kaboomLevel.get("door").at(0) as GameObj<SpriteComp | AreaComp>;
+
+    door.onCollide("key", async (obj, col) => {
+        obj.destroy();
+        door.use(k.color(k.Color.BLACK));
+        if (config !== undefined && config.nextScene) {
+            k.burp();
+            k.wait(DOOR_OPEN_DELAY, () => {
+                k.go(config.nextScene);
+            });
+        }
     });
 
     return {
