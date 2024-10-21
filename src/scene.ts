@@ -8,9 +8,13 @@ interface StomperLevelConfig {
 export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: StomperLevelConfig = undefined) {
     const GAME_TILE = 64;
     const GAME_GRAVITY = k.getGravity();
+    const UI_PADDING = 16;
     const CHAR_STOMP_MOVEMENT = 20;
     const CHAR_JUMP_STRENGTH = GAME_GRAVITY * .24;
+    const CHAR_MAX_HP = 3;
+    const CHAR_INVINCIBILITY_TIME = 3;
     const DOOR_OPEN_DELAY = 3;
+    const SPIKE_JUMP_STRENGTH = .5;
 
     const game = k.add([
         k.timer()
@@ -35,6 +39,16 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
             accel: 2,
         }
     ]);
+
+    const ui = game.add([
+        "controller",
+        k.pos(UI_PADDING, UI_PADDING),
+        k.fixed(),
+        {
+            hp: CHAR_MAX_HP,
+            maxHP: CHAR_MAX_HP,
+        }
+    ])
     
     const levelConfig: LevelOpt = {
         tileWidth: GAME_TILE,
@@ -82,11 +96,14 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
                 k.anchor("bot"),
                 k.body(),
                 k.area(),
+                k.opacity(1),
+                k.health(CHAR_MAX_HP, CHAR_MAX_HP),
                 {
                     movement: k.vec2(),
                     speed: k.vec2(575, 150),
-                    stomping: false,
                     lastStandingPoint: k.vec2(0, 0),
+                    stomping: false,
+                    invincible: false,
                 }
             ],
             "D": () => [
@@ -104,9 +121,9 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
                 k.anchor("bot"),
                 k.z(2),
             ],
-            // TODO
             "A": () => [
                 "spike",
+                "spike-bottom",
                 "danger",
                 k.sprite("spike"),
                 k.area(),
@@ -132,11 +149,12 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
     const levelMap = level.map;
     const kaboomLevel = k.addLevel(levelMap, levelConfig);
     
-    const character = kaboomLevel.get("character").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | PosComp | {
+    const character = kaboomLevel.get("character").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | HealthComp | OpacityComp | PosComp | {
         movement: Vec2;
         speed: Vec2;
-        stomping: boolean;
         lastStandingPoint: Vec2;
+        stomping: boolean;
+        invincible: boolean;
     }>;
     const characterInitialPos = character.pos.clone();
     character.lastStandingPoint = characterInitialPos.clone();
@@ -280,6 +298,34 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
         grabbable.use(chase(k, character, 4, offset));
     });
 
+    character.onCollide("spike-bottom", (obj, col) => {
+        if (character.invincible) {
+            return;
+        }
+    
+        character.hurt(1);
+
+        ui.hp = character.hp();
+        ui.maxHP = character.maxHP();
+
+        character.movement.y = 0;
+        character.stomping = false;
+        character.jump(GAME_GRAVITY * SPIKE_JUMP_STRENGTH);
+
+        character.invincible = true;
+        character.opacity = .5;
+        game.wait(CHAR_INVINCIBILITY_TIME, () => {
+            character.invincible = false;
+            character.opacity = 1;
+            character.resolveCollision(obj);
+        });
+    });
+
+    character.onDeath(() => {
+        // TODO
+        character.destroy();
+    });
+
     const door = kaboomLevel.get("door").at(0) as GameObj<SpriteComp | AreaComp>;
 
     door.onCollide("key", async (obj, col) => {
@@ -290,6 +336,16 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
             k.wait(DOOR_OPEN_DELAY, () => {
                 k.go(config.nextScene);
             });
+        }
+    });
+
+    ui.onDraw(() => {
+        for (let i = 0; i < ui.maxHP; i++) {
+            k.drawSprite({
+                sprite: "heart",
+                pos: k.vec2(GAME_TILE * i, 0),
+                color: i >= ui.hp ? k.Color.BLACK : k.Color.WHITE
+            })
         }
     });
 

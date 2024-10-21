@@ -19,6 +19,7 @@ k.loadSprite("bean", "sprites/bean.png");
 k.loadSprite("door", "sprites/door.png");
 k.loadSprite("steel", "sprites/steel.png");
 k.loadSprite("spike", "sprites/spike.png");
+k.loadSprite("heart", "sprites/heart.png");
 k.loadSprite("key-o", "sprites/key-o.png");
 k.loadSprite("btfly-o", "sprites/btfly-o.png");
 
