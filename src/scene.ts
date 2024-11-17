@@ -1,5 +1,6 @@
 import { AnchorComp, AreaComp, BodyComp, GameObj, SpriteComp, StateComp, PosComp, Vec2, LevelOpt, KaboomCtx, Comp, HealthComp, OpacityComp } from "kaplay";
 import { chase } from "./comps/chase";
+import { addLevelBlocks } from "./helpers/addLevelBlocks";
 
 interface StomperLevelConfig {
     nextScene: string;
@@ -64,15 +65,15 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
                     bounceableStrength: .3
                 }
             ],
-            "=": () => [
-                "block",
-                "structure",
-                k.sprite("steel"),
-                k.body({
-                    isStatic: true
-                }),
-                k.area()
-            ],
+            // "=": () => [
+            //     "block",
+            //     "structure",
+            //     k.sprite("steel"),
+            //     k.body({
+            //         isStatic: true
+            //     }),
+            //     k.area()
+            // ],
             "#": () => [
                 "block",
                 "structure",
@@ -148,6 +149,20 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
     
     const levelMap = level.map;
     const kaboomLevel = k.addLevel(levelMap, levelConfig);
+
+    const objs = addLevelBlocks(k, kaboomLevel, levelMap, {
+        key: '=',
+        tileWidth: GAME_TILE,
+        tileHeight: GAME_TILE,
+        sprite: "steel",
+        comps: [
+            "block",
+            "structure",
+            k.body({
+                isStatic: true
+            })
+        ]
+    });
     
     const character = kaboomLevel.get("character").at(0) as GameObj<AnchorComp | AreaComp | BodyComp | SpriteComp | StateComp | HealthComp | OpacityComp | PosComp | {
         movement: Vec2;
@@ -283,9 +298,8 @@ export function makePlayableLevel(k: KaboomCtx, level: StomperLevel, config: Sto
         }
     });
 
-    k.onCollide("character", "grabbable", (a, b) => {
-        const character = a as GameObj<BodyComp | PosComp>;
-        const grabbable = b as GameObj<AreaComp | PosComp>;
+    character.onCollide("grabbable", (obj, col) => {
+        const grabbable = obj as GameObj<AreaComp | PosComp>;
 
         // random position on top of the character to avoid overlapping
         // NOTE: still does overlap
